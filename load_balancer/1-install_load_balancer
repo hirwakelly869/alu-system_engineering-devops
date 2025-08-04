@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+STUDENT_ID=""
+WEB01_IP="3.91.213.236"
+WEB02_IP="54.225.15.225"
+
+echo "[+] Updating system and installing HAProxy..."
+sudo apt-get update
+sudo apt-get install -y haproxy
+
+echo "[+] Enabling HAProxy to start at boot..."
+sudo sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy
+
+echo "[+] Backing up the original HAProxy config..."
+sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+
+echo "[+] Creating new HAProxy configuration..."
+sudo tee /etc/haproxy/haproxy.cfg > /dev/null <<EOF
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+
+frontend http_front
+    bind *:80
+    default_backend web_back
+
+backend web_back
+    balance roundrobin
+    server ${STUDENT_ID}-web-01 ${WEB01_IP}:80 check
+    server ${STUDENT_ID}-web-02 ${WEB02_IP}:80 check
+EOF
+
+echo "[+] Restarting HAProxy..."
+sudo service haproxy restart
+
+echo "[+] HAProxy Status:"
+sudo service haproxy status
