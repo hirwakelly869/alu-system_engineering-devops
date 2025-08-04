@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#script is to install haproxy
+
 STUDENT_ID=""
 WEB01_IP="3.91.213.236"
 WEB02_IP="54.225.15.225"
